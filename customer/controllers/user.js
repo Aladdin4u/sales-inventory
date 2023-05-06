@@ -1,6 +1,43 @@
 const User = require("../models/User");
-const { CreateChannel } = require("../utils/rabbitMQ");
-const channel = CreateChannel();
+const amqplib = require("amqplib");
+// const { CreateChannel, SubscribeMessage } = require("../utils/rabbitMQ");
+
+let channel, connection;
+
+const connectToRabbitMQ = async () => {
+  connection = await amqplib.connect(process.env.MSG_QUEUE_URL);
+  channel = await connection.createChannel();
+  await channel.assertQueue(process.env.EXCHANGE_NAME, "direct", {
+    durable: true,
+  });
+};
+connectToRabbitMQ().then( async() => {
+  await channel.assertExchange(process.env.EXCHANGE_NAME, "direct", { durable: true });
+  const q = await channel.assertQueue("", { exclusive: true });
+  console.log(` Waiting for messages in queue: ${q.queue}`);
+
+  channel.bindQueue(q.queue, process.env.EXCHANGE_NAME, process.env.CUSTOMER_SERVICE);
+
+  channel.consume(
+    q.queue,
+    async (msg) => {
+      if (msg.content) {
+        console.log("the message is:", msg.content.toString());
+        const { user, product} = JSON.parse(msg.content.toString())
+        console.log("userrrr>", user)
+        const profile = await User.findById(user)
+        if(profile) {
+          profile.wishlist.push(product)
+          profile.save();
+        }
+      }
+      console.log("[X] received");
+    },
+    {
+      noAck: true,
+    }
+  );
+});
 
 module.exports = {
   createUser: async (req, res, next) => {
@@ -21,6 +58,18 @@ module.exports = {
         { new: true }
       );
       res.status(200).json(updatedUser);
+    } catch (error) {
+      next(error);
+    }
+  },
+  addProductWishlist: async (req, res, next) => {
+    const user = req.id
+    try {
+      const profile = await User.findById(user);
+      const wishlist = SubscribeMessage(channel)
+      console.log(wishlist)
+      profile.wishlist.push(JSON.parse(wishlist))
+      res.status(200).json(wishlist);
     } catch (error) {
       next(error);
     }

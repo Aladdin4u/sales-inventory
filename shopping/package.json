@@ -1,7 +1,7 @@
 {
-  "name": "Tradem",
+  "name": "shopping",
   "version": "1.0.0",
-  "description": "A Visa agency",
+  "description": "shopping microservice",
   "main": "app.js",
   "scripts": {
     "start": "cross-env NODE_ENV=production node app",
@@ -11,6 +11,7 @@
   "author": "Aladdin",
   "license": "MIT",
   "dependencies": {
+    "amqplib": "^0.10.3",
     "axios": "^1.3.2",
     "bcrypt": "^5.0.1",
     "cloudinary": "^1.32.0",
