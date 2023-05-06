@@ -7,8 +7,10 @@ const router = express.Router();
 router.post("/", verifyAdmin, productController.createProduct);
 //Update
 router.put("/wishlist/:userId", verifyUser, productController.updateWishlist);
+router.put("/cart", verifyUser, productController.addToCart);
 router.put("/:id", verifyAdmin, productController.updateProduct);
 //Delete
+router.put("/cart/:id", verifyUser, productController.deleteFromCart);
 router.delete("/:id", verifyAdmin, productController.deleteProduct);
 //Get
 router.get("/:id", productController.getProduct);

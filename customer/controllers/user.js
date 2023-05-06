@@ -11,23 +11,48 @@ const connectToRabbitMQ = async () => {
     durable: true,
   });
 };
-connectToRabbitMQ().then( async() => {
-  await channel.assertExchange(process.env.EXCHANGE_NAME, "direct", { durable: true });
+connectToRabbitMQ().then(async () => {
+  await channel.assertExchange(process.env.EXCHANGE_NAME, "direct", {
+    durable: true,
+  });
   const q = await channel.assertQueue("", { exclusive: true });
   console.log(` Waiting for messages in queue: ${q.queue}`);
 
-  channel.bindQueue(q.queue, process.env.EXCHANGE_NAME, process.env.CUSTOMER_SERVICE);
+  channel.bindQueue(
+    q.queue,
+    process.env.EXCHANGE_NAME,
+    process.env.CUSTOMER_SERVICE
+  );
 
   channel.consume(
     q.queue,
     async (msg) => {
       if (msg.content) {
         console.log("the message is:", msg.content.toString());
-        const { user, product} = JSON.parse(msg.content.toString())
-        console.log("userrrr>", user)
-        const profile = await User.findById(user)
-        if(profile) {
-          profile.wishlist.push(product)
+        const { user, product } = JSON.parse(msg.content.toString());
+        console.log("userrrr>", user);
+        const profile = await User.findById(user);
+        if (profile) {
+          let wishlist = profile.wishlist;
+
+          if (wishlist.length > 0) {
+            let isExist = false;
+            wishlist.map((item) => {
+              if (item._id.toString() === product._id.toString()) {
+                const index = wishlist.indexOf(item);
+                wishlist.splice(index, 1);
+                isExist = true;
+              }
+            });
+
+            if (!isExist) {
+              wishlist.push(product);
+            }
+          } else {
+            wishlist.push(product);
+          }
+
+          profile.wishlist = wishlist;
           profile.save();
         }
       }
@@ -39,6 +64,42 @@ connectToRabbitMQ().then( async() => {
   );
 });
 
+const addToCart = async () => {
+  const profile = await CustomerModel.findById(customerId).populate("cart");
+
+  if (profile) {
+    const cartItem = {
+      product: { _id, name, price, banner },
+      unit: qty,
+    };
+
+    let cartItems = profile.cart;
+
+    if (cartItems.length > 0) {
+      let isExist = false;
+      cartItems.map((item) => {
+        if (item.product._id.toString() === _id.toString()) {
+          if (isRemove) {
+            cartItems.splice(cartItems.indexOf(item), 1);
+          } else {
+            item.unit = qty;
+          }
+          isExist = true;
+        }
+      });
+
+      if (!isExist) {
+        cartItems.push(cartItem);
+      }
+    } else {
+      cartItems.push(cartItem);
+    }
+
+    profile.cart = cartItems;
+
+    return await profile.save();
+  }
+};
 module.exports = {
   createUser: async (req, res, next) => {
     const newUser = new User(req.body);
@@ -63,12 +124,12 @@ module.exports = {
     }
   },
   addProductWishlist: async (req, res, next) => {
-    const user = req.id
+    const user = req.id;
     try {
       const profile = await User.findById(user);
-      const wishlist = SubscribeMessage(channel)
-      console.log(wishlist)
-      profile.wishlist.push(JSON.parse(wishlist))
+      const wishlist = SubscribeMessage(channel);
+      console.log(wishlist);
+      profile.wishlist.push(JSON.parse(wishlist));
       res.status(200).json(wishlist);
     } catch (error) {
       next(error);

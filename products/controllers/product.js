@@ -42,7 +42,34 @@ module.exports = {
     try {
       const product = await Product.findById(req.body._id);
       channel.publish(process.env.EXCHANGE_NAME, process.env.CUSTOMER_SERVICE, Buffer.from(JSON.stringify({user, product})));
-      // channel.sendToQueue(process.env.CUSTOMER_SERVICE, Buffer.from(JSON.stringify(product)));
+      res.status(200).json(product);
+    } catch (error) {
+      next(error);
+    }
+  },
+  addToCart: async (req, res, next) => {
+    const user = req.user;
+    console.log(req.body);
+    console.log(user);
+    try {
+      const product = await Product.findById(req.body._id);
+      channel.publish(process.env.EXCHANGE_NAME, process.env.CUSTOMER_SERVICE, Buffer.from(JSON.stringify({user, product})));
+      channel.publish(process.env.EXCHANGE_NAME, process.env.SHOPPING_SERVICE, Buffer.from(JSON.stringify({user, product})));
+
+      res.status(200).json(product);
+    } catch (error) {
+      next(error);
+    }
+  },
+  deleteFromCart: async (req, res, next) => {
+    const user = req.user;
+    console.log(req.body);
+    console.log(user);
+    try {
+      const product = await Product.findById(req.params._id);
+      channel.publish(process.env.EXCHANGE_NAME, process.env.CUSTOMER_SERVICE, Buffer.from(JSON.stringify({user, product})));
+      channel.publish(process.env.EXCHANGE_NAME, process.env.SHOPPING_SERVICE, Buffer.from(JSON.stringify({user, product})));
+
       res.status(200).json(product);
     } catch (error) {
       next(error);
