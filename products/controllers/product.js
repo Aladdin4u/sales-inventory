@@ -36,9 +36,7 @@ module.exports = {
     }
   },
   updateWishlist: async (req, res, next) => {
-    const user = req.params.userId;
-    console.log(req.body);
-    console.log(user);
+    const user = req.user.id;
     try {
       const product = await Product.findById(req.body._id);
       channel.publish(process.env.EXCHANGE_NAME, process.env.CUSTOMER_SERVICE, Buffer.from(JSON.stringify({user, product})));
@@ -48,12 +46,10 @@ module.exports = {
     }
   },
   addToCart: async (req, res, next) => {
-    const user = req.user;
-    console.log(req.body);
-    console.log(user);
+    const user = req.user.id;
     try {
       const product = await Product.findById(req.body._id);
-      channel.publish(process.env.EXCHANGE_NAME, process.env.CUSTOMER_SERVICE, Buffer.from(JSON.stringify({user, product})));
+      channel.publish(process.env.EXCHANGE_NAME, process.env.CUSTOMER_ADDTOCART, Buffer.from(JSON.stringify({user, product})));
       channel.publish(process.env.EXCHANGE_NAME, process.env.SHOPPING_SERVICE, Buffer.from(JSON.stringify({user, product})));
 
       res.status(200).json(product);

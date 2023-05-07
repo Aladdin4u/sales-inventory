@@ -6,7 +6,7 @@ const router = express.Router();
 //Create
 router.post("/", verifyAdmin, productController.createProduct);
 //Update
-router.put("/wishlist/:userId", verifyUser, productController.updateWishlist);
+router.put("/wishlist", verifyUser, productController.updateWishlist);
 router.put("/cart", verifyUser, productController.addToCart);
 router.put("/:id", verifyAdmin, productController.updateProduct);
 //Delete

@@ -7,25 +7,29 @@ let channel, connection;
 const connectToRabbitMQ = async () => {
   connection = await amqplib.connect(process.env.MSG_QUEUE_URL);
   channel = await connection.createChannel();
-  await channel.assertQueue(process.env.EXCHANGE_NAME, "direct", {
-    durable: true,
-  });
 };
 connectToRabbitMQ().then(async () => {
   await channel.assertExchange(process.env.EXCHANGE_NAME, "direct", {
     durable: true,
   });
-  const q = await channel.assertQueue("", { exclusive: true });
-  console.log(` Waiting for messages in queue: ${q.queue}`);
+  await channel.assertQueue("wishlist", { exclusive: true });
+  await channel.assertQueue("cart", { exclusive: true });
+  await channel.assertQueue("order", { exclusive: true });
+  console.log(` Waiting for messages in queue: wishlist, cart, order`);
 
   channel.bindQueue(
-    q.queue,
+    "wishlist",
     process.env.EXCHANGE_NAME,
     process.env.CUSTOMER_SERVICE
   );
+  channel.bindQueue(
+    "cart",
+    process.env.EXCHANGE_NAME,
+    process.env.CUSTOMER_ADDTOCART
+  );
 
   channel.consume(
-    q.queue,
+    "wishlist",
     async (msg) => {
       if (msg.content) {
         console.log("the message is:", msg.content.toString());
@@ -56,7 +60,54 @@ connectToRabbitMQ().then(async () => {
           profile.save();
         }
       }
-      console.log("[X] received");
+      console.log("[X] received wishlist");
+    },
+    {
+      noAck: true,
+    }
+  );
+  channel.consume(
+    "cart",
+    async (msg) => {
+      if (msg.content) {
+        console.log("the message is:", msg.content.toString());
+        const { user, product, qty } = JSON.parse(msg.content.toString());
+        console.log("userrrr>", user);
+        const profile = await User.findById(user);
+        if (profile) {
+          const cartItem = {
+            product: { _id, name, price, banner },
+            unit: qty,
+          };
+      
+          let cartItems = profile.cart;
+      
+          if (cartItems.length > 0) {
+            let isExist = false;
+            cartItems.map((item) => {
+              if (item.product._id.toString() === _id.toString()) {
+                if (isRemove) {
+                  cartItems.splice(cartItems.indexOf(item), 1);
+                } else {
+                  item.unit = qty;
+                }
+                isExist = true;
+              }
+            });
+      
+            if (!isExist) {
+              cartItems.push(cartItem);
+            }
+          } else {
+            cartItems.push(cartItem);
+          }
+      
+          profile.cart = cartItems;
+      
+          return await profile.save();
+        }
+      }
+      console.log("[X] received cart");
     },
     {
       noAck: true,
@@ -67,38 +118,7 @@ connectToRabbitMQ().then(async () => {
 const addToCart = async () => {
   const profile = await CustomerModel.findById(customerId).populate("cart");
 
-  if (profile) {
-    const cartItem = {
-      product: { _id, name, price, banner },
-      unit: qty,
-    };
-
-    let cartItems = profile.cart;
-
-    if (cartItems.length > 0) {
-      let isExist = false;
-      cartItems.map((item) => {
-        if (item.product._id.toString() === _id.toString()) {
-          if (isRemove) {
-            cartItems.splice(cartItems.indexOf(item), 1);
-          } else {
-            item.unit = qty;
-          }
-          isExist = true;
-        }
-      });
-
-      if (!isExist) {
-        cartItems.push(cartItem);
-      }
-    } else {
-      cartItems.push(cartItem);
-    }
-
-    profile.cart = cartItems;
-
-    return await profile.save();
-  }
+  
 };
 module.exports = {
   createUser: async (req, res, next) => {
