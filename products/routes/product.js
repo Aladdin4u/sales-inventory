@@ -10,7 +10,7 @@ router.put("/wishlist", verifyUser, productController.updateWishlist);
 router.put("/cart", verifyUser, productController.addToCart);
 router.put("/:id", verifyAdmin, productController.updateProduct);
 //Delete
-router.put("/cart/:id", verifyUser, productController.deleteFromCart);
+router.delete("/cart/:id", verifyUser, productController.deleteFromCart);
 router.delete("/:id", verifyAdmin, productController.deleteProduct);
 //Get
 router.get("/:id", productController.getProduct);

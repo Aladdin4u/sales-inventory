@@ -4,9 +4,7 @@ const morgan = require("morgan");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const connectDB = require("./config/db");
-const authRoute = require("./routes/auth");
-const usersRoute = require("./routes/shopping");
-const addressRoute = require("./routes/address");
+const shoppingRoute = require("./routes/shopping");
 
 const app = express();
 // Load env file
@@ -20,7 +18,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(morgan("dev"));
 
-app.use("/api/shopping", usersRoute);
+app.use("/api/shopping", shoppingRoute);
 
 app.use((err, req, res, next) => {
   const errorStatus = err.status || 500;

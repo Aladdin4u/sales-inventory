@@ -8,70 +8,39 @@ let channel, connection;
 const connectToRabbitMQ = async () => {
   connection = await amqplib.connect(process.env.MSG_QUEUE_URL);
   channel = await connection.createChannel();
-  await channel.assertQueue(process.env.EXCHANGE_NAME, "direct", {
-    durable: true,
-  });
 };
 connectToRabbitMQ().then(async () => {
   await channel.assertExchange(process.env.EXCHANGE_NAME, "direct", {
     durable: true,
   });
-  const q = await channel.assertQueue("", { exclusive: true });
-  console.log(` Waiting for messages in queue: ${q.queue}`);
+  await channel.assertQueue("addtocartshopping", { exclusive: true });
+  await channel.assertQueue("removecartshopping", { exclusive: true });
+  console.log(` Waiting for messages in queue: wishlist, cart, order`);
 
   channel.bindQueue(
-    q.queue,
+    "addtocartshopping",
     process.env.EXCHANGE_NAME,
-    process.env.SHOPPING_SERVICE
+    process.env.CUSTOMER_ADDTOCART
+  );
+  channel.bindQueue(
+    "removecartshopping",
+    process.env.EXCHANGE_NAME,
+    process.env.CUSTOMER_REMOVECART
   );
 
   channel.consume(
-    q.queue,
+    "addtocartshopping",
     async (msg) => {
       if (msg.content) {
         console.log("the message is:", msg.content.toString());
-        const { user, product } = JSON.parse(msg.content.toString());
-        console.log("userrrr>", user);
-        const cart = await Cart.findById(user);
-        if(cart){
-                
-          let isExist = false;
-
-          let cartItems = cart.items;
-
-
-          if(cartItems.length > 0){
-
-              cartItems.map(item => {
-                                          
-                  if(item.product._id.toString() === _id.toString()){
-                      if(isRemove){
-                          cartItems.splice(cartItems.indexOf(item), 1);
-                       }else{
-                         item.unit = qty;
-                      }
-                       isExist = true;
-                  }
-              });
-          } 
-          
-          if(!isExist && !isRemove){
-              cartItems.push({product: { ...item}, unit: qty });
-          }
-
-          cart.items = cartItems;
-
-          return await cart.save()
-
-      }else{
-
-         return await CartModel.create({
-              customerId,
-              items:[{product: { ...item}, unit: qty }]
-          })
+        const { user, data, qty } = JSON.parse(msg.content.toString());
+        const newCart = new Cart({
+            customerId: user,
+            items: [{ product: { ...data }, unit: qty }],
+          });
+          await newCart.save()
       }
-      }
-      console.log("[X] received");
+      console.log("[X] received cart");
     },
     {
       noAck: true,

@@ -13,7 +13,8 @@ connectToRabbitMQ().then(async () => {
     durable: true,
   });
   await channel.assertQueue("wishlist", { exclusive: true });
-  await channel.assertQueue("cart", { exclusive: true });
+  await channel.assertQueue("addtocart", { exclusive: true });
+  await channel.assertQueue("removecart", { exclusive: true });
   await channel.assertQueue("order", { exclusive: true });
   console.log(` Waiting for messages in queue: wishlist, cart, order`);
 
@@ -23,9 +24,14 @@ connectToRabbitMQ().then(async () => {
     process.env.CUSTOMER_SERVICE
   );
   channel.bindQueue(
-    "cart",
+    "addtocart",
     process.env.EXCHANGE_NAME,
     process.env.CUSTOMER_ADDTOCART
+  );
+  channel.bindQueue(
+    "removecart",
+    process.env.EXCHANGE_NAME,
+    process.env.CUSTOMER_REMOVECART
   );
 
   channel.consume(
@@ -67,7 +73,7 @@ connectToRabbitMQ().then(async () => {
     }
   );
   channel.consume(
-    "cart",
+    "addtocart",
     async (msg) => {
       if (msg.content) {
         console.log("the message is:", msg.content.toString());
@@ -79,13 +85,13 @@ connectToRabbitMQ().then(async () => {
             product: data,
             unit: qty,
           };
-      
+          const isRemove = false;
           let cartItems = profile.cart;
-      
+
           if (cartItems.length > 0) {
             let isExist = false;
             cartItems.map((item) => {
-              if (item.product._id.toString() === _id.toString()) {
+              if (item.product._id === data._id) {
                 if (isRemove) {
                   cartItems.splice(cartItems.indexOf(item), 1);
                 } else {
@@ -94,17 +100,64 @@ connectToRabbitMQ().then(async () => {
                 isExist = true;
               }
             });
-      
+
             if (!isExist) {
               cartItems.push(cartItem);
             }
           } else {
             cartItems.push(cartItem);
           }
-      
+
           profile.cart = cartItems;
-      
-          return await profile.save();
+
+          profile.save();
+        }
+      }
+      console.log("[X] received cart");
+    },
+    {
+      noAck: true,
+    }
+  );
+  channel.consume(
+    "removecart",
+    async (msg) => {
+      if (msg.content) {
+        console.log("the message is:", msg.content.toString());
+        const { user, data, qty } = JSON.parse(msg.content.toString());
+        console.log("userrrr>", user);
+        const profile = await User.findById(user);
+        if (profile) {
+          const cartItem = {
+            product: data,
+            unit: qty,
+          };
+          const isRemove = true;
+          let cartItems = profile.cart;
+
+          if (cartItems.length > 0) {
+            let isExist = false;
+            cartItems.map((item) => {
+              if (item.product._id === data._id) {
+                if (isRemove) {
+                  cartItems.splice(cartItems.indexOf(item), 1);
+                } else {
+                  item.unit = qty;
+                }
+                isExist = true;
+              }
+            });
+
+            if (!isExist) {
+              cartItems.push(cartItem);
+            }
+          } else {
+            cartItems.push(cartItem);
+          }
+
+          profile.cart = cartItems;
+
+          profile.save();
         }
       }
       console.log("[X] received cart");
@@ -115,11 +168,7 @@ connectToRabbitMQ().then(async () => {
   );
 });
 
-const addToCart = async () => {
-  const profile = await CustomerModel.findById(customerId).populate("cart");
 
-  
-};
 module.exports = {
   createUser: async (req, res, next) => {
     const newUser = new User(req.body);

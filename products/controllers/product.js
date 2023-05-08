@@ -47,10 +47,24 @@ module.exports = {
   },
   addToCart: async (req, res, next) => {
     const user = req.user.id;
-    const {product_id} = req.body._id
-    const {qty} = req.body.qty
+    const qty = req.body.qty
+    console.log(req.body)
     try {
-      const data = await Product.findById(product_id);
+      const data = await Product.findById(req.body._id);
+      channel.publish(process.env.EXCHANGE_NAME, process.env.CUSTOMER_ADDTOCART, Buffer.from(JSON.stringify({user, data, qty})));
+      channel.publish(process.env.EXCHANGE_NAME, process.env.SHOPPING_SERVICE, Buffer.from(JSON.stringify({user, data, qty})));
+
+      res.status(200).json(data);
+    } catch (error) {
+      next(error);
+    }
+  },
+  deleteFromCart: async (req, res, next) => {
+    const user = req.user.id;
+    const qty = req.body.qty
+    console.log(req.body)
+    try {
+      const data = await Product.findById(req.body._id);
       channel.publish(process.env.EXCHANGE_NAME, process.env.CUSTOMER_ADDTOCART, Buffer.from(JSON.stringify({user, data, qty})));
       channel.publish(process.env.EXCHANGE_NAME, process.env.SHOPPING_SERVICE, Buffer.from(JSON.stringify({user, data, qty})));
 

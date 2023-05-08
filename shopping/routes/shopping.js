@@ -1,16 +1,16 @@
 const express = require("express");
 const shoppingController = require("../controllers/shopping");
-const { verifyshopping, verifyAdmin } = require("../middlewares/verifyToken");
+const { verifyUser, verifyAdmin } = require("../middlewares/verifyToken");
 const router = express.Router();
 
 //Create
 router.post("/", shoppingController.createShopping);
 //Update
-router.put("/:id", verifyshopping, shoppingController.updateShopping);
+router.put("/:id", verifyUser, shoppingController.updateShopping);
 //Delete
-router.delete("/:id", verifyshopping, shoppingController.deleteShopping);
+router.delete("/:id", verifyUser, shoppingController.deleteShopping);
 //Get
-router.get("/:id", verifyshopping, shoppingController.getShopping);
+router.get("/:id", verifyUser, shoppingController.getShopping);
 //GetAll
 router.get("/", verifyAdmin, shoppingController.getAllShoppings);
 
