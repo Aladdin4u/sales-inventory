@@ -4,14 +4,15 @@ const { verifyUser, verifyAdmin } = require("../middlewares/verifyToken");
 const router = express.Router();
 
 //Create
-router.post("/", verifyUser, shoppingController.placeOrder);
+router.post("/order", verifyUser, shoppingController.placeOrder);
 //Update
-router.put("/:id", verifyUser, shoppingController.updateShopping);
+router.put("/cart", verifyUser, shoppingController.updateShopping);
 //Delete
 router.delete("/:id", verifyUser, shoppingController.deleteShopping);
 //Get
 router.get("/:id", verifyUser, shoppingController.getShopping);
-//GetAll
-router.get("/", verifyUser, shoppingController.getCart);
+//Get
+router.get("/cart", verifyUser, shoppingController.getCart);
+router.get("/order", verifyUser, shoppingController.getOrder);
 
 module.exports = router;

@@ -33,6 +33,11 @@ connectToRabbitMQ().then(async () => {
     process.env.EXCHANGE_NAME,
     process.env.CUSTOMER_REMOVECART
   );
+  channel.bindQueue(
+    "order",
+    process.env.EXCHANGE_NAME,
+    process.env.SHOPPING_ORDER
+  );
 
   channel.consume(
     "wishlist",
@@ -161,6 +166,35 @@ connectToRabbitMQ().then(async () => {
         }
       }
       console.log("[X] received cart");
+    },
+    {
+      noAck: true,
+    }
+  );
+  channel.consume(
+    "order",
+    async (msg) => {
+      if (msg.content) {
+        console.log("the message is:", msg.content.toString());
+        const { user, orderResult } = JSON.parse(msg.content.toString());
+        console.log("userrrr>", user);
+        const profile = await User.findById(user);
+
+        if(profile){ 
+            
+            if(profile.orders == undefined){
+                profile.orders = []
+            }
+            profile.orders.push(orderResult);
+
+            profile.cart = [];
+
+            const profileResult = await profile.save();
+
+            return profileResult;
+        }
+      }
+      console.log("[X] received order");
     },
     {
       noAck: true,

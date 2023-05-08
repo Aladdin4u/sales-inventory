@@ -164,6 +164,7 @@ module.exports = {
       }
 
       res.status(200).json(orderResult);
+      channel.publish(process.env.EXCHANGE_NAME, process.env.SHOPPING_ORDER, Buffer.from(JSON.stringify({user, orderResult})))
     } catch (error) {
       next(error);
     }
@@ -201,6 +202,15 @@ module.exports = {
     try {
       const cart = await Cart.find({ customer: user });
       res.status(200).json(cart);
+    } catch (error) {
+      next(error);
+    }
+  },
+  getOrder: async (req, res, next) => {
+    const user = req.user.id;
+    try {
+      const order = await Order.find({ customer: user });
+      res.status(200).json(order);
     } catch (error) {
       next(error);
     }
