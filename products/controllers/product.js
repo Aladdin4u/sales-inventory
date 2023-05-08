@@ -65,7 +65,7 @@ module.exports = {
     console.log(req.body)
     try {
       const data = await Product.findById(req.body._id);
-      channel.publish(process.env.EXCHANGE_NAME, process.env.CUSTOMER_ADDTOCART, Buffer.from(JSON.stringify({user, data, qty})));
+      channel.publish(process.env.EXCHANGE_NAME, process.env.CUSTOMER_REMOVECART, Buffer.from(JSON.stringify({user, data, qty})));
       channel.publish(process.env.EXCHANGE_NAME, process.env.SHOPPING_SERVICE, Buffer.from(JSON.stringify({user, data, qty})));
 
       res.status(200).json(data);

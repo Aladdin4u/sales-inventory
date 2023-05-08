@@ -34,11 +34,91 @@ connectToRabbitMQ().then(async () => {
       if (msg.content) {
         console.log("the message is:", msg.content.toString());
         const { user, data, qty } = JSON.parse(msg.content.toString());
-        const newCart = new Cart({
+        const cart = await Cart.findOne({ customerId: user });
+
+        const { _id } = data;
+        const isRemove = false;
+
+        if (cart) {
+          let isExist = false;
+
+          let cartItems = cart.items;
+
+          if (cartItems.length > 0) {
+            cartItems.map((item) => {
+              if (item.product._id === _id) {
+                if (isRemove) {
+                  cartItems.splice(cartItems.indexOf(item), 1);
+                } else {
+                  item.unit = qty;
+                }
+                isExist = true;
+              }
+            });
+          }
+
+          if (!isExist && !isRemove) {
+            cartItems.push({ product: { ...item }, unit: qty });
+          }
+
+          cart.items = cartItems;
+
+          await cart.save();
+        } else {
+          await Cart.create({
             customerId: user,
             items: [{ product: { ...data }, unit: qty }],
           });
-          await newCart.save()
+        }
+      }
+      console.log("[X] received cart");
+    },
+    {
+      noAck: true,
+    }
+  );
+  channel.consume(
+    "removecartshopping",
+    async (msg) => {
+      if (msg.content) {
+        console.log("the message is:", msg.content.toString());
+        const { user, data, qty } = JSON.parse(msg.content.toString());
+        const cart = await Cart.findOne({ customerId: user });
+
+        const { _id } = data;
+        const isRemove = true;
+
+        if (cart) {
+          let isExist = false;
+
+          let cartItems = cart.items;
+
+          if (cartItems.length > 0) {
+            cartItems.map((item) => {
+              if (item.product._id === _id) {
+                if (isRemove) {
+                  cartItems.splice(cartItems.indexOf(item), 1);
+                } else {
+                  item.unit = qty;
+                }
+                isExist = true;
+              }
+            });
+          }
+
+          if (!isExist && !isRemove) {
+            cartItems.push({ product: { ...item }, unit: qty });
+          }
+
+          cart.items = cartItems;
+
+          await cart.save();
+        } else {
+          await Cart.create({
+            customerId: user,
+            items: [{ product: { ...data }, unit: qty }],
+          });
+        }
       }
       console.log("[X] received cart");
     },
@@ -49,12 +129,41 @@ connectToRabbitMQ().then(async () => {
 });
 
 module.exports = {
-  createShopping: async (req, res, next) => {
-    const newCart = new Cart(req.body);
-
+  placeOrder: async (req, res, next) => {
+    const user = req.user.id;
+    let orderResult;
     try {
-      const savedCart = await newCart.save();
-      res.status(200).json(savedCart);
+      const cart = await Cart.findOne({ customerId: user });
+      if (cart) {
+        let amount = 0;
+
+        let cartItems = cart.items;
+
+        if (cartItems.length > 0) {
+          //process Order
+
+          cartItems.map((item) => {
+            amount += parseInt(item.product.price) * parseInt(item.unit);
+          });
+
+          const orderId = Math.random() * 4;
+
+          const order = new Order({
+            orderId: orderId,
+            customerId: user,
+            amount: amount,
+            status: "received",
+            items: cartItems,
+          });
+
+          cart.items = [];
+          console.log(order)
+          orderResult = await order.save();
+          await cart.save();
+        }
+      }
+
+      res.status(200).json(orderResult);
     } catch (error) {
       next(error);
     }
@@ -87,10 +196,11 @@ module.exports = {
       next(error);
     }
   },
-  getAllShoppings: async (req, res, next) => {
+  getCart: async (req, res, next) => {
+    const user = req.user.id;
     try {
-      const Carts = await Cart.find();
-      res.status(200).json(Carts);
+      const cart = await Cart.find({ customer: user });
+      res.status(200).json(cart);
     } catch (error) {
       next(error);
     }
