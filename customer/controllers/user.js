@@ -71,12 +71,12 @@ connectToRabbitMQ().then(async () => {
     async (msg) => {
       if (msg.content) {
         console.log("the message is:", msg.content.toString());
-        const { user, product, qty } = JSON.parse(msg.content.toString());
+        const { user, data, qty } = JSON.parse(msg.content.toString());
         console.log("userrrr>", user);
         const profile = await User.findById(user);
         if (profile) {
           const cartItem = {
-            product: { _id, name, price, banner },
+            product: data,
             unit: qty,
           };
       
