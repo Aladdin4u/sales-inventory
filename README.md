@@ -34,5 +34,5 @@ I learnt how to use rabbitMQ to communicate with different microservices, which 
 
 ## Usage:
 
-1. run `npm run dev` to start app
+1. run `docker-compose build && docker-compose-up` to start app
 1. Navigate to `localhost:8000`
