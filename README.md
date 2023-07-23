@@ -30,7 +30,7 @@ I learnt how to use rabbitMQ to communicate with different microservices, which 
    cp .env.local.example .env.local
    ```
 1. Enter your data into .env.local
-1. run `npm intall`
+1. run `npm install`
 
 ## Usage:
 
