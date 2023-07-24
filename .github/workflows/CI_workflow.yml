@@ -29,3 +29,15 @@ jobs:
       run: |
         yarn
         yarn test
+
+    - name: Test products Service
+      working-directory: ./products
+      run: |
+        yarn
+        yarn test
+
+    - name: Test shopping Service
+      working-directory: ./shopping
+      run: |
+        yarn
+        yarn test
