@@ -23,9 +23,9 @@ jobs:
       uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
+
     - name: Test Customer Service
       working-directory: ./customer
       run: |
-        npm ci
-        npm test
+        yarn
+        yarn test
