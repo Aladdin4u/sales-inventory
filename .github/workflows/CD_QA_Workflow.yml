@@ -49,7 +49,7 @@ jobs:
         
     - name: Generate deployment package
       run: |
-        zip -r deploy.zip. -x'*.git*'
+        zip -r deploy.zip . -x '*.git*'
         
     - name: Deploy on Elastic beanstalk QA Env
       uses: einaregilsson/beanstalk-deploy@v20
