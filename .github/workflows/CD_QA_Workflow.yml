@@ -59,7 +59,7 @@ jobs:
         application_name: sales-test
         environment_name: Sales-test-env
         version_label: ver-${{ github.sha }}
-        region: eu-central-1
+        region: us-east-1
         deployment_package: deploy.zip
       
     
