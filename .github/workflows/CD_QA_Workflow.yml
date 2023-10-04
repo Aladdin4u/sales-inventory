@@ -17,10 +17,10 @@ jobs:
     - name: Create Customer Env file
       working-directory: ./customer
       run: |
-        touch .env
-        echo APP_SECRET=${{ secrets.QA_APP_SECRET }} >> .env
-        echo MONGODB_URL=${{ secrets.QA_CUSTOMER_DB_URL }} >> .env
-        echo MSG_QUEUE_URL=${{ secrets.QA_MSG_QUEUE_URL }} >> .env
+        touch config/.env
+        echo APP_SECRET=${{ secrets.QA_APP_SECRET }} >> config/.env
+        echo MONGODB_URL=${{ secrets.QA_CUSTOMER_DB_URL }} >> config/.env
+        echo MSG_QUEUE_URL=${{ secrets.QA_MSG_QUEUE_URL }} >> config/.env
         echo EXCHANGE_NAME=ONLINE_STORE >> .env
         echo PORT=8001 >> .env
         cat .env
@@ -28,10 +28,10 @@ jobs:
     - name: Create Products Env file
       working-directory: ./products
       run: |
-        touch .env
-        echo APP_SECRET=${{ secrets.QA_APP_SECRET }} >> .env
-        echo MONGODB_URL=${{ secrets.QA_PRODUCTS_DB_URL }} >> .env
-        echo MSG_QUEUE_URL=${{ secrets.QA_MSG_QUEUE_URL }} >> .env
+        touch config/.env
+        echo APP_SECRET=${{ secrets.QA_APP_SECRET }} >> config/.env
+        echo MONGODB_URL=${{ secrets.QA_PRODUCTS_DB_URL }} >> config/.env
+        echo MSG_QUEUE_URL=${{ secrets.QA_MSG_QUEUE_URL }} >> config/.env
         echo EXCHANGE_NAME=ONLINE_STORE >> .env
         echo PORT=8002 >> .env
         cat .env
@@ -39,10 +39,10 @@ jobs:
     - name: Create Shopping Env file
       working-directory: ./shopping
       run: |
-        touch .env
-        echo APP_SECRET=${{ secrets.QA_APP_SECRET }} >> .env
-        echo MONGODB_URL=${{ secrets.QA_SHOPPING_DB_URL }} >> .env
-        echo MSG_QUEUE_URL=${{ secrets.QA_MSG_QUEUE_URL }} >> .env
+        touch config/.env
+        echo APP_SECRET=${{ secrets.QA_APP_SECRET }} >> config/.env
+        echo MONGODB_URL=${{ secrets.QA_SHOPPING_DB_URL }} >> config/.env
+        echo MSG_QUEUE_URL=${{ secrets.QA_MSG_QUEUE_URL }} >> config/.env
         echo EXCHANGE_NAME=ONLINE_STORE >> .env
         echo PORT=8003 >> .env
         cat .env
